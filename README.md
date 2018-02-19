@@ -11,4 +11,5 @@ About Kubernetes
 
 - [Launch Course](https://training.linuxfoundation.org/portal)
 
-- [Labs](./Documents/LFS258-Labs_V_2018-02-15.pdf)
+#- [Labs](./Documents/LFS258-Labs_V_2018-02-15.pdf)
+- [Labs](https://lms.quickstart.com/custom/858487/LFS258-Labs_V_2018-02-15.pdf)
