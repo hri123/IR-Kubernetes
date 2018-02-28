@@ -1,0 +1,18 @@
+--- 
+apiVersion: v1
+kind: Service
+metadata: 
+  labels: 
+    run: my-emp
+  name: my-emp
+spec: 
+  ports: 
+    - 
+      port: 80
+      protocol: TCP
+      targetPort: 8888
+      nodePort: 31514
+  selector: 
+    run: my-emp
+  type: NodePort
+

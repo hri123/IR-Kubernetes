@@ -1,0 +1,21 @@
+--- 
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata: 
+  name: my-emp
+spec: 
+  replicas: 3
+  template: 
+    metadata: 
+      labels: 
+        run: my-emp
+    spec: 
+      containers: 
+        - 
+          image: dockerhubstore/employee:1.0.1
+          imagePullPolicy: Always
+          name: my-emp
+          ports: 
+            - 
+              containerPort: 8888
+

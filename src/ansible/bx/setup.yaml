@@ -1,0 +1,33 @@
+---
+    - name: Check if bx cli is installed
+      shell: bx --version
+      register: bx_setup
+      ignore_errors: True
+
+    - debug:
+        msg: "{{ ansible_os_family }}"
+
+    - name: Install sudo package
+      package: name=sudo state=present
+      when: (bx_setup|failed and ansible_os_family == 'RedHat') or (bx_setup|failed and ansible_os_family == 'Debian')
+
+    - name: Download bx cli
+      shell: curl -fsSL https://clis.ng.bluemix.net/install/linux | sh
+      when: (bx_setup|failed and ansible_os_family == 'RedHat') or (bx_setup|failed and ansible_os_family == 'Debian')
+
+    - name: Download bx cli
+      shell: curl -fsSL https://clis.ng.bluemix.net/install/osx | sh
+      when: 
+        - bx_setup|failed
+        - ansible_os_family == 'MacOSX'
+
+    - name: Check if the cs plugin is installed
+      shell: bx cs help
+      register: bx_cs_setup
+      ignore_errors: True
+      no_log: True
+
+    - name: Install the container-service plugin
+      shell: bx plugin install container-service -r Bluemix
+      when: bx_cs_setup|failed
+

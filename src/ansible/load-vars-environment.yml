@@ -1,0 +1,56 @@
+--- 
+- 
+  gather_facts: true
+  hosts: localhost
+  tasks: 
+    - name: Armada cluster
+      block:
+        - 
+          debug: 
+            msg: "Attempting to load local account credentials..."
+        - 
+          failed_when: "1 == 0"
+          ignore_errors: true
+          include_vars: ./account.yaml
+          name: "import account credentials"
+          no_log: true
+        - 
+          include: bx/setup.yaml
+        - 
+          set_fact: 
+            kube_cluster_name: "{{ inventory_dir | basename }}"
+        - 
+          name: "Log in"
+          no_log: true
+          shell: "bx login --apikey \"{{ bluemix_apikey }}\" -a \"{{ bluemix_api_url }}\" -o \"{{ bluemix_org }}\" -s \"{{ bluemix_space }}\""
+        - 
+          include: bx/get-cluster-info.yaml
+        - 
+          fail: 
+            msg: "Cannot proceed, cluster state is {{ kube_cluster_state }}, must be normal!"
+          when: "kube_cluster_state != \"normal\""
+        - 
+          include: bx/kubeconfig.yaml
+        - 
+          set_fact: 
+            example_recreate: true
+          when: 
+            - "recreate_everything is defined"
+            - recreate_everything|bool
+        - 
+          set_fact: 
+            load_vars_environment: true
+      
+      when:
+        - deploy_on_minikube is undefined
+
+    - name: Minikube
+      block:
+        - name: start minikube
+          shell: /root/git/MyCode/setup/installation/start_minikube.sh
+
+        - set_fact:
+            kubectlCmd: kubectl
+      when:
+        - deploy_on_minikube is defined
+        - deploy_on_minikube|bool

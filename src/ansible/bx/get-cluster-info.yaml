@@ -1,0 +1,24 @@
+    - name: Get cluster info
+      shell: bx cs cluster-get '{{kube_cluster_name}}'
+      register: cluster_info
+
+    - name: Get cluster ID
+      shell: echo "{{ cluster_info.stdout }}" | grep ID | awk {'print $2'}
+      register: clusterid
+    - set_fact:
+        kube_cluster_id: "{{ clusterid.stdout }}"
+
+    - name: Get cluster state
+      shell: echo "{{ cluster_info.stdout }}" | grep State | awk {'print $2'}
+      register: clusterstate
+    - set_fact:
+        kube_cluster_state: "{{ clusterstate.stdout }}"
+
+    - name: Get deploy datacenter
+      shell: echo "{{ cluster_info.stdout }}" | grep Datacenter | awk {'print $2'}
+      register: deploydc
+    - set_fact:
+        deploy_datacenter: "{{ deploydc.stdout }}"
+
+    - debug:
+        msg: "Cluster: {{ kube_cluster_name }}, ID: {{ kube_cluster_id }}, State: {{ kube_cluster_state }}, Deploy DC: {{ deploy_datacenter }}"

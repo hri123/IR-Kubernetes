@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: my-emp-ingress
+spec:
+  tls:
+  - hosts:
+    - hrikumar06-paid-cluster.us-south.containers.mybluemix.net
+    secretName: hrikumar06-paid-cluster
+  rules:
+  - host: hrikumar06-paid-cluster.us-south.containers.mybluemix.net
+    http:
+      paths:
+      - path: /my-emp
+        backend:
+          serviceName: my-emp
+          servicePort: 80

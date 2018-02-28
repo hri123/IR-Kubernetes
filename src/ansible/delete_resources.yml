@@ -1,0 +1,10 @@
+---
+- include: ./load-vars-environment.yml
+  when: load_vars_environment is undefined
+
+- name: Undeploy kubernetes resources
+  hosts: localhost
+  gather_facts: False
+
+  tasks:
+    - shell: "{{ kubectlCmd }} delete namespace {{ namespace }}"

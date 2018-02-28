@@ -1,0 +1,12 @@
+---
+- include: ./load-vars-environment.yml
+  when: load_vars_environment is undefined
+
+- name: Deploy kubernetes resources
+  hosts: localhost
+  gather_facts: False
+
+  tasks:
+          
+    - name: Init Helm
+      shell: "KUBECONFIG={{kube_config_dir}}/{{kube_cluster_id}}/{{kube_config_file_name}} && helm init"

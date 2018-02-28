@@ -1,0 +1,23 @@
+- name: create learn-kube namespace if needed
+  shell: "{{ kubectlCmd }}  get namespace {{namespace}} || {{ kubectlCmd }} create namespace {{namespace}}"
+  run_once: true
+
+- name: delete existing example
+  shell: "{{ item }}"
+  with_items:
+    - "{{ kubectlCmd }} --namespace {{namespace}} delete -f ../examples/nodejs-mongodb/mongo_service.yml"
+    - "{{ kubectlCmd }} --namespace {{namespace}} delete -f ../examples/nodejs-mongodb/mongo_pod.yml"
+    - "{{ kubectlCmd }} --namespace {{namespace}} delete -f ../examples/nodejs-mongodb/employee_service.yml"
+    - "{{ kubectlCmd }} --namespace {{namespace}} delete -f ../examples/nodejs-mongodb/employee_pod.yml"
+  when: example_recreate is defined and example_recreate|bool
+  ignore_errors: yes
+  run_once: true
+
+- name: Create example
+  shell: "{{ item }}"
+  with_items:
+    - "{{ kubectlCmd }} --namespace {{namespace}} get service mongo || {{ kubectlCmd }} --namespace {{namespace}} create -f ../examples/nodejs-mongodb/mongo_service.yml"
+    - "{{ kubectlCmd }} --namespace {{namespace}} get deployment mongo || {{ kubectlCmd }} --namespace {{namespace}} create -f ../examples/nodejs-mongodb/mongo_pod.yml"
+    - "{{ kubectlCmd }} --namespace {{namespace}} get service my-emp || {{ kubectlCmd }} --namespace {{namespace}} create -f ../examples/nodejs-mongodb/employee_service.yml"
+    - "{{ kubectlCmd }} --namespace {{namespace}} get deployment my-emp || {{ kubectlCmd }} --namespace {{namespace}} create -f ../examples/nodejs-mongodb/employee_pod.yml"
+  run_once: true
