@@ -5,3 +5,8 @@
 - Cloud Native Computing Foundation (CNCF)
 
 - Container Network Interface (CNI)
+
+
+# Network explanation
+
+Very Good - https://speakerdeck.com/thockin/illustrated-guide-to-kubernetes-networking
