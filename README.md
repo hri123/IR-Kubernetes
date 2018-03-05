@@ -73,3 +73,9 @@ ca.crt namespace token
 # Get all kubernetes resource types
 
 kubectl get -h | more
+
+# Ingress
+
+Ingress Logs:
+
+kc -n kube-system log public-cr251bed1fc4814b9da2b926e9616e5ac5-alb1-3281394020-bg0fs -c nginx-ingress
