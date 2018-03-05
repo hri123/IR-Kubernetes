@@ -5,7 +5,7 @@
 - [Labs](https://lms.quickstart.com/custom/858487/LFS258-Labs_V_2018-02-15.pdf)
 
 - [YAML References / Solutions](https://training.linuxfoundation.org/cm/LFS258/)
-`curl https://training.linuxfoundation.org/cm/LFS258/LFS258_V2018-02-15_SOLUTIONS.tar.bz2 | tar xvz -C .`
+`curl -u LFtraining https://training.linuxfoundation.org/cm/LFS258/LFS258_V2018-02-15_SOLUTIONS.tar.bz2 | tar xvz -C .`
 
 - [Forum](https://www.linux.com/forums/lfs258-class-forum)
 
