@@ -1,0 +1,20 @@
+#Usage: kc -n sock-shop apply -f ingress-bluemix-sample.yaml
+#URL: http://hrikumar09-paid-cluster.us-south.containers.mybluemix.net/ or http://hrikumar09-paid-cluster.us-south.containers.mybluemix.net/front-end
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: front-end-ingress
+  annotations:
+# Without the below annotation the ingress forwards the request to service as <serviceName:port>/front-end
+#    ingress.bluemix.net/rewrite-path: "serviceName=front-end rewrite=/"
+spec:
+  rules:
+  - host: hrikumar09-paid-cluster.us-south.containers.mybluemix.net
+    http:
+      paths:
+      - path: /
+# the page is not showing up fine with /front-end path
+#      - path: /front-end
+        backend:
+          serviceName: front-end
+          servicePort: 80
