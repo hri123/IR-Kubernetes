@@ -11,4 +11,6 @@
 
 - if you need assistance beyond what's available above, please email us at: training@linuxfoundation.org and provide your LFID username and a description of your concern
 
+## Note Taking
 
+- Use skitch to copy into MS Word any required information
