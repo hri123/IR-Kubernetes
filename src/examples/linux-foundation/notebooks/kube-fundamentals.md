@@ -6,6 +6,7 @@
 
 - [YAML References / Solutions](https://training.linuxfoundation.org/cm/LFS258/)
 `curl -u LFtraining https://training.linuxfoundation.org/cm/LFS258/LFS258_V2018-02-15_SOLUTIONS.tar.bz2 | tar xvz -C .`
+for linux use `xvj` instead of `xvz` as the tar option
 
 - [Forum](https://www.linux.com/forums/lfs258-class-forum)
 
