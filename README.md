@@ -7,38 +7,14 @@
 - Helm to deploy employee example - can be extended to WAMS later if possible
 - Not able to access hrikumar06-paid-cluster.us-south.containers.mybluemix.net/my-emp from outside, need to figure out
 
-## To Read
-
-- [Large-scale cluster management at Google with Borg](https://research.google.com/pubs/pub43438.html)
-
-- https://www.gcppodcast.com/post/episode-46-borg-and-k8s-with-john-wilkes/
-
-- [Kubernetes User Case Studies](https://kubernetes.io/case-studies/)
-
-
-# Being on Top
-
-- answer kubernetes questions on StackOverflow to retain familiarity (https://stackoverflow.com/search?q=kubernetes)
-
-- contribute to https://github.com/kubernetes/community
 
 
 # Notebook
 
 https://github.com/kubernetes-client/python/tree/master/examples/notebooks
 
-# Big Words
-
-- 12 Factor application principles - guidance to build applications that can scale easily, deployed on cloud and whose build is automated
-
-- Cloud Native Computing Foundation (CNCF)
-
-- Container Network Interface (CNI)
 
 
-# Network explanation
-
-Very Good - https://speakerdeck.com/thockin/illustrated-guide-to-kubernetes-networking
 
 
 # Using curl instead of kubectl
