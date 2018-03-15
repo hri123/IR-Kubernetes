@@ -48,15 +48,18 @@ for linux use `xvj` instead of `xvz` as the tar option
 
 ## Revisit
 
-1.17. New Distribution Similarities
+
 
 ## To Read
+
+- various configuration options for each of the components like apiserver, controller-manager, scheduler, kubelet, kube-proxy
 
 - [Large-scale cluster management at Google with Borg](https://research.google.com/pubs/pub43438.html)
 - https://www.slideshare.net/chipchilders/cloud-foundry-the-platform-for-forging-cloud-native-applications
 - [Case Studies](https://kubernetes.io/case-studies/)
 - https://www.gcppodcast.com/post/episode-46-borg-and-k8s-with-john-wilkes/
 - [Bringing Pokémon GO to life on Google Cloud](ringing Pokémon GO to life on Google Cloud)
+- [Kubernetes, the hard way](https://github.com/kelseyhightower/kubernetes-the-hard-way)
 
 
 ## Being on Top
@@ -107,16 +110,44 @@ Network: join containers and at the same time secure from others
 
 ## Architecture
 
+Architecture - see page https://kubernetes.io/docs/concepts/architecture/cloud-controller/
+[Architecture Diagram](https://d33wubrfki0l68.cloudfront.net/e298a92e2454520dddefc3b4df28ad68f9b91c6f/70d52/images/docs/pre-ccm-arch.png)
+
 Master runs the API Server, a scheduler, various controller, a storage system to keep state of cluster, container settings, network configuration.
+
+kube api-server - receives every request, authentication, authorization, etcd database 
+
+etcd database - cluster state, resources info - only apiserver talk to it
+
 kube scheduler finds a suitable node to run a container in.
-kubelet receives request to run the containers, manages any necessary resources and watches over the local node.
+kubelet receives request to run the containers, manages any necessary resources and watches over the local node, deploy controller, pods, download image, handle local configuration. Also sends back status to apiserver on master.
 kube-proxy creates and manages networking rules to expose the container on the network.
+
+kubernetes federation - for HA - multiple clusters are joined together with a common control plane allowing movement of resources from once cluster to another administratively or after failure
 
 ### Network explanation
 
 Very Good - https://speakerdeck.com/thockin/illustrated-guide-to-kubernetes-networking
 
-Choose between Calico / Flannel
+Choose between 
+
+Calico 
+  flat layer 3 network communicates without IP encapsulation
+  simple, flexible networking model
+  scales well 
+  network policies
+
+flannel
+  layer 3 ipv4 n/w between nodes of cluster 
+  focussed on traffic b/n hosts, not how containers configure local networking
+  uses one of several backend mechanism like vxlan
+  flanneld agent on each node allocates subnet leases for the host
+
+kube-router
+
+romana
+
+weave net
 
 Deciding which pod network to use for Container Networking Interface (CNI), should take into account the expected demands on the cluster. There can be only one pod network per cluster, although the CNI-Genie project is trying to change this.
 The network must allow container-to-container, pod-to-pod, pod-to-service, and external-to-service communications. As Docker uses host-private networking, using the docker0 virtual bridge and veth interfaces you would need to be on that host to communicate.
@@ -143,19 +174,63 @@ Nodes have taints and Pods need to have tolerations to run on tainted nodes.
 
 ## Tools
 
-MiniKube (inside VirtualBox) - for non production env
-
-kubeadm
-kubectl (~/.kube/config)
 
 Helm - charts 
 
 Kompose - Docker compose to Kubernetes objects
 
+## Linux 
+
+systemd - system startup and service management (replaces upstart and service) (https://wiki.debian.org/systemd/CheatSheet)
+journald - systemd service that collects and stores logging data (structured indexed journals) (replaces text based logs)
+firewalld - firewall management (replaces iptables)
+ip - show and manipulate routing, network devices, routing information and tunnels, part of net-tools package (replaces ifconfig)
+
+
 
 ## Installation
 
+you run the components of kubernetes as either 
+- system daemon - unit files for each component
+- or as a docker containers managed by a kubelet, kubelet runs as a system-daemon and is passed manifests of how each component needs to run
+
+### Using Minikube
+
+https://github.com/kubernetes/minikube
+
+MiniKube (inside Oracle VirtualBox) - for non production env, learning, testing, development
+minikube runs a single Go binary called localkube
+
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+or
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.22.2/minikube-linux-amd64
+chmod +x minikube
+sudo mv minikube /usr/local/bin/
+minikube start
+
+
+### Others
+
+Using configuration management systems like Chef, puppet, ansible, terraform
+
+hyperkube - all in one binary
+
+kubespray (kargo) - kubernetes incubator, advanced ansible 
+
+kops - for AWS
+
+kube-aws
+
+kubicorn
+
+### Armada
+
+bx cs cluster-config my-paid-cluster
+
+
 ### Using Kubeadm
+
+https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
 
 - https://fyre.svl.ibm.com/embers
 - Ubuntu 16.04 LTS
@@ -274,5 +349,12 @@ now `curl $WORKER_1_IP:30452` from anywhere should work
   
 
 
+## Cluster config
 
-Paused at 3.4. Installation Tools for installation of kubernetes
+contains endpoints, credentials, context 
+
+kubectl config use-context foobar
+
+
+
+Paused at 4.5. Master Node
