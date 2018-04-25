@@ -7,6 +7,7 @@ metadata:
   annotations:
 # Without the below annotation the ingress forwards the request to service as <serviceName:port>/front-end
 #    ingress.bluemix.net/rewrite-path: "serviceName=front-end rewrite=/"
+#    ingress.bluemix.net/ALB-ID: "private-craxxxxxxxxxx-alb1"
 spec:
   rules:
   - host: hrikumar09-paid-cluster.us-south.containers.mybluemix.net

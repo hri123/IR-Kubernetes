@@ -48,7 +48,9 @@ for linux use `xvj` instead of `xvz` as the tar option
 
 ## Revisit
 
+Labs 4.1, 4.2, 4.3, 5.1, 5.2
 
+5.6. Checking Access (from `There are currently ... ` to end)
 
 ## To Read
 
@@ -108,26 +110,123 @@ A service ties traffic from one agent to another (e.g.: a frontend webserver to 
 
 Network: join containers and at the same time secure from others
 
+
+### Similar Orchestrators like Mesos, etc
+
+- same master, worker, storage to persist state, networking
+- uses zookeeper instead of etcd
+
+What set Kubernetes apart is - fault-tolerance, self-discovery, scaling, API-driven mindset (REST API with HTTP verbs)
+
+
 ## Architecture
 
 Architecture - see page https://kubernetes.io/docs/concepts/architecture/cloud-controller/
 [Architecture Diagram](https://d33wubrfki0l68.cloudfront.net/e298a92e2454520dddefc3b4df28ad68f9b91c6f/70d52/images/docs/pre-ccm-arch.png)
 
-Master runs the API Server, a scheduler, various controller, a storage system to keep state of cluster, container settings, network configuration.
+### Master 
 
-kube api-server - receives every request, authentication, authorization, etcd database 
+runs the 
+- API Server
+- scheduler
+- various controllers
+- a storage system (etcd) to keep state of cluster / container settings / network configuration
+- cloud-controller-manager (for third party cluster management)
 
-etcd database - cluster state, resources info - only apiserver talk to it
+### Worker
 
-kube scheduler finds a suitable node to run a container in.
-kubelet receives request to run the containers, manages any necessary resources and watches over the local node, deploy controller, pods, download image, handle local configuration. Also sends back status to apiserver on master.
-kube-proxy creates and manages networking rules to expose the container on the network.
+- kubelet
 
-kubernetes federation - for HA - multiple clusters are joined together with a common control plane allowing movement of resources from once cluster to another administratively or after failure
+- kube-proxy
 
-### Network explanation
+- supervisord
+  - monitors kubelet and kube-proxy, restart them if they fail, log events
+
+- other management daemons to provide services not part of kubernetes
+
+
+#### Troubleshooting
+
+- journalctl -r -u kubelet
+- syslog
+- kern.log
+- sudo dmesg -T
+- docker ps -a
+
+- go over command history
+- check `apt-cache policy intel-microcode`
+
+### Essential add-ons
+
+- inbuilt
+  - DNS services
+
+- external
+  - logging
+    - no cluster wide logging
+    - use fluentd for unified logging layer for cluster, which filters, buffers and routes messages
+  - resource monitoring
+
+### kube api-server 
+
+- receives every request (both internal and external), authentication, authorization, etcd database 
+
+### etcd database 
+
+- cluster state, networking, resources info 
+- only apiserver talk to it
+- btree key value store
+- rather than finding entries and changing an entry, values are appended, previous values are marked for future removal by a compaction process
+- works with curl and other HTTP libraries
+- provides reliable watch queries
+- can work in HA setup with leader election among themselves
+- on simultaneous request to update, only the first, updates, and the next returns 409 CONFLICT error since it no longer has the same version number, the client needs to handle this (optimistic concurrency); the resourceVersion is currently backed via the modifiedIndex parameter in the etcd database and is unique to the namespace, kind and server.
+
+### kube-controller-manager
+
+- manages controllers
+
+### cloud-controller-manager
+
+- option cloud-provider-external has to be passed to kubelet
+
+
+### kube scheduler 
+- finds a suitable node to run a container in based on an algorithm
+- scheduling can be customized using a custom scheduler, quota restrictions, using node affinity in specs, taints / tolerations (Nodes have taints and Pods need to have tolerations to run on tainted nodes)
+
+### kubelet 
+
+- receives request to run the containers, manages any necessary resources and watches over the local node, deploy controller, pods, download image, handle local configuration
+- also sends back status to apiserver on master.
+- interacts with docker on worker
+- makes sure that need to run are running
+- ensures pods can access volumes, secrets, configmaps
+
+
+### kube-proxy
+
+- kube-proxy creates and manages networking rules to expose the container on the network.
+- manages n/w connectivity to containers using iptable entries
+- also has userspace mode - monitors services and endpoints using a random port to proxy traffic and an alpha feature of ipvs
+
+### kubernetes federation
+
+- for HA - multiple clusters are joined together with a common control plane allowing movement of resources from once cluster to another administratively or after failure
+
+### Network 
 
 Very Good - https://speakerdeck.com/thockin/illustrated-guide-to-kubernetes-networking
+
+CNI: CNI plugin is to configure the network of a pod, provide IP per pod, CNI does not help in pod - pod communication
+Calico / Flannel: To provide pod - pod across nodes and node - pod communication, basically communication between all IPs involved (nodes and pods) are routable without NAT (either physical n/w infrastructure or overlay network)
+
+CNI - aims to provide a common interface between various networking solutions and container runtimes.
+Deciding which pod network to use for Container Networking Interface (CNI), should take into account the expected demands on the cluster. There can be only one pod network per cluster, although the CNI-Genie project is trying to change this.
+The network must allow container-to-container, pod-to-pod, pod-to-service, and external-to-service communications. As Docker uses host-private networking, using the docker0 virtual bridge and veth interfaces you would need to be on that host to communicate.
+
+CNI spec for calico gets created in - /etc/cni/net.d/10-calico.conf
+
 
 Choose between 
 
@@ -149,28 +248,61 @@ romana
 
 weave net
 
-Deciding which pod network to use for Container Networking Interface (CNI), should take into account the expected demands on the cluster. There can be only one pod network per cluster, although the CNI-Genie project is trying to change this.
-The network must allow container-to-container, pod-to-pod, pod-to-service, and external-to-service communications. As Docker uses host-private networking, using the docker0 virtual bridge and veth interfaces you would need to be on that host to communicate.
 
 ## Resources (kubectl explain -h)
 
-Pod - consists of one or more containers, share IP, access to storage and namespace. Typically one container in a Pod runs the application, while the other containers support the primary application.
+kubectl [command] [type] [Name] [flag]
+
+### API versions
+
+alpha, beta, stable
+curl https://127.0.0.1:6443/apis -k
+
+### Pod
+
+- consists of one or more containers, share network namespace of a sidecar container called `pause container` (one IP per pod), access to storage and namespace. Typically one container in a Pod runs the application, while the other containers (for logging, etc, called sidecar) support the primary application.
+- containers in pod are started in parallel, no way to determine which becomes available first
+- to communicate between containers in Pod, use loopback interface, use IPC or shared file system
+
+kubectl logs mypod
+
+### Services
+
+- NodePort / LoadBalancer
+- a microservice to distribute inbound requests among many pods
+- also handles access policies, useful for resource control, as well for security
+
+### Controller or watch-loops
+
+A simplified view of a controller is an agent, or `Informer`, and a downstream store.
+interrogates apiserver for object state, modifies the object until declared state matches the object state.
+
+- Deployment: ensures resouces are available (like IP / Storage) and creates replicasets
+- Replicatset: deploys / restarts containers until the requested number is running
+- Replication Controller: obviated by Deployment
+- endpoints
+- namespace
+- serviceaccounts
+
+### Jobs / CronJobs
 
 
-Controller or watch-loops: interrogates apiserver for object state, modifies the object until declared state matches the object state.
-  - Deployment: ensures resouces are available (like IP / Storage) and creates replicasets
-    - Replicatset: deploys / restarts containers until the requested number is running
-  - Replication Controller: obviated by Deployment
+### namespaces
 
-  Jobs
-  CronJobs
+namespace is a linux kernel feature that segregates system resources with quotas. (limits)
+access control policies also work on namespace boundaries
 
+default/kube-public/kube-system are created on cluster creations
 
-Labels - object metadata - usually for making kubectl calls on groups of resources
-Annotations - like labels but cannot be used by kubectl, but usually for 3rd party agents / tools
+### Labels / Annotations
 
-Nodes have taints and Pods need to have tolerations to run on tainted nodes.
+- Labels - object metadata - usually for making kubectl calls on groups of resources
 
+- Annotations - like labels but cannot be used by kubectl, but usually for 3rd party agents / tools, so that you dont need a third party database tying object to metadata
+
+kubectl annotate pods --all description="my Pods" -n mypod
+kubectl annotate --overwrite pods description="prev my Pods" -n mypod
+kubectl annotate pods foo description- -n mypod
 
 ## Tools
 
@@ -178,6 +310,20 @@ Nodes have taints and Pods need to have tolerations to run on tainted nodes.
 Helm - charts 
 
 Kompose - Docker compose to Kubernetes objects
+
+### kubectl
+
+kubectl makes REST API calls internally 
+
+e.g.:
+
+kubectl get pods --all-namespaces
+is same as
+curl --cert userbob.pem --key userBob-key.pem --cacert /path/to/ca.pem https://k8sserver:6443/api/v1/pods
+
+verbose mode:
+
+kubectl get pods mypod --v=9
 
 ## Linux 
 
@@ -349,12 +495,29 @@ now `curl $WORKER_1_IP:30452` from anywhere should work
   
 
 
-## Cluster config
+## Access - authentication authorization RBAC
+
+### Cluster config
 
 contains endpoints, credentials, context 
 
 kubectl config use-context foobar
 
+kubectl config view
+(certificate authority, key and certificate come from ~/.kube/config)
+certificate authority data is passed to authenticate the curl request, users refer to client credentials - client key and certificate, username and password, token. Token and username/password are mutually exclusive.
+kubectl config set-credentials -h
 
 
-Paused at 4.5. Master Node
+### What can i do ?
+
+kubectl auth can-i create deployments
+kubectl auth can-i create deployments --as bob
+kubectl auth can-i create deployments --as bob --namespace developer
+
+
+
+
+
+
+Paused - 6.2. Introduction
