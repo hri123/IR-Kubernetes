@@ -48,7 +48,7 @@ for linux use `xvj` instead of `xvz` as the tar option
 
 ## Revisit
 
-Labs 4.1, 4.2, 4.3, 5.1, 5.2
+Labs 4.1, 4.2, 4.3, 5.1, 5.2, 6.1, 6.2, 6.3
 
 5.6. Checking Access (from `There are currently ... ` to end)
 
@@ -256,45 +256,68 @@ kubectl [command] [type] [Name] [flag]
 ### API versions
 
 alpha, beta, stable
-curl https://127.0.0.1:6443/apis -k
 
-### Pod
+discover API groups:
+curl https://127.0.0.1:6443/apis --header "Authorization: Bearer $token" -k
 
+#### v1 API group
+
+- v1 group
+- storage.k8s.io/v1
+- rbac.authorization.k8s.io/v1
+- batch
+- security.k8s.api
+
+### API Resources / API Objects
+
+#### Pod
+
+- One or more containers with access to IP address and storage
 - consists of one or more containers, share network namespace of a sidecar container called `pause container` (one IP per pod), access to storage and namespace. Typically one container in a Pod runs the application, while the other containers (for logging, etc, called sidecar) support the primary application.
 - containers in pod are started in parallel, no way to determine which becomes available first
 - to communicate between containers in Pod, use loopback interface, use IPC or shared file system
 
 kubectl logs mypod
 
-### Services
+#### Services
 
+- IP traffic between pods or to the outside world
 - NodePort / LoadBalancer
 - a microservice to distribute inbound requests among many pods
 - also handles access policies, useful for resource control, as well for security
 
-### Controller or watch-loops
+#### Controller or watch-loops
 
 A simplified view of a controller is an agent, or `Informer`, and a downstream store.
 interrogates apiserver for object state, modifies the object until declared state matches the object state.
 
-- Deployment: ensures resouces are available (like IP / Storage) and creates replicasets
-- Replicatset: deploys / restarts containers until the requested number is running
+- Deployment: ensures resouces are available (like IP / Storage) and creates replicasets (easy scaling / upgrades / administration)
+- Replicatset: orchestrates pod lifecycle, deploys / restarts containers until the requested number is running
 - Replication Controller: obviated by Deployment
 - endpoints
 - namespace
-- serviceaccounts
+- serviceaccounts: provides identifier for processes running in pod to access API server
+- DaemonSet: Ensure pod on every node
+- StatefulSets: to manage stateful applications, considers each pod unique, each pod gets stable storage, stable network identity, and an ordinal, stick a container to a node (otherwise same as deployment). the default deployment is sequential where app-1 is not launched until app-0 is ready and running.
+- Node: cordon / uncordon
+- ResourceQuota: defines quotas per namespace
+- Horizontal Pod Autoscalers (HPA) - adds pods if usage > 50% cpu usage (default), kubelet checks the usage, HPA checks with Heapster which retrieves the usage
+- Cluster Autoscaler - adds nodes to cluster
+- Vertical Pod Autoscaler - in development
 
-### Jobs / CronJobs
+#### Jobs / CronJobs
 
+- Jobs: Run Pod to completion, restarted on failure until the number of completion is reached (for batch processing or one off pods)
+- 
 
-### namespaces
+#### namespaces
 
 namespace is a linux kernel feature that segregates system resources with quotas. (limits)
 access control policies also work on namespace boundaries
 
 default/kube-public/kube-system are created on cluster creations
 
-### Labels / Annotations
+#### Labels / Annotations
 
 - Labels - object metadata - usually for making kubectl calls on groups of resources
 
@@ -497,6 +520,16 @@ now `curl $WORKER_1_IP:30452` from anywhere should work
 
 ## Access - authentication authorization RBAC
 
+### RBAC
+
+define roles and associate users to roles
+e.g: create a role who can only read pods in a specific namespace
+
+- ClusterRole
+- Role
+- ClusterRoleBinding
+- RoleBinding
+
 ### Cluster config
 
 contains endpoints, credentials, context 
@@ -520,4 +553,4 @@ kubectl auth can-i create deployments --as bob --namespace developer
 
 
 
-Paused - 6.2. Introduction
+Paused - 7.2. Introduction
