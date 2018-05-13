@@ -550,6 +550,7 @@ kubectl auth can-i create deployments --as bob --namespace developer
 
 
 
+# Example / Sample
 
 
 
