@@ -4,7 +4,8 @@ kubectl_install_dir: "{{ lookup('env','HOME') }}/tmp/{{namespace}}"
 kube_config_dir: "{{ lookup('env','HOME') }}/.bluemix/plugins/container-service/clusters"
 
 
-bluemix_api_url: https://api.ng.bluemix.net
+bluemix_api_url: https://api.eu-gb.bluemix.net/
 # bluemix_apikey: put this in account.yaml
 bluemix_org: wdp-armada
 bluemix_space: dev
+bluemix_region: eu-gb
