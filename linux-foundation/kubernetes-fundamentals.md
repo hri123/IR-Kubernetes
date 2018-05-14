@@ -12,6 +12,9 @@
 
 - [Labs](https://lms.quickstart.com/custom/858487/LFS258-Labs_V_2018-02-15.pdf)
 
+- [Complete Demo](https://raw.githubusercontent.com/microservices-demo/microservices-demo/
+master/deploy/kubernetes/complete-demo.yaml)
+
 - [YAML References / Solutions](https://training.linuxfoundation.org/cm/LFS258/)
 `curl -u LFtraining https://training.linuxfoundation.org/cm/LFS258/LFS258_V2018-02-15_SOLUTIONS.tar.bz2 | tar xvz -C .`
 for linux use `xvj` instead of `xvz` as the tar option
@@ -48,9 +51,7 @@ for linux use `xvj` instead of `xvz` as the tar option
 
 ## Revisit
 
-Labs 4.1, 4.2, 4.3, 5.1, 5.2, 6.1, 6.2, 6.3
-
-5.6. Checking Access (from `There are currently ... ` to end)
+Labs 5.1, 5.2, 6.1, 6.2, 6.3
 
 ## To Read
 
@@ -170,6 +171,7 @@ runs the
 ### kube api-server 
 
 - receives every request (both internal and external), authentication, authorization, etcd database 
+- default serialization for API calls is JSON (YAML we use is converted to JSON)
 
 ### etcd database 
 
@@ -270,12 +272,17 @@ curl https://127.0.0.1:6443/apis --header "Authorization: Bearer $token" -k
 
 ### API Resources / API Objects
 
+kubectl get -h | more
+
 #### Pod
 
 - One or more containers with access to IP address and storage
 - consists of one or more containers, share network namespace of a sidecar container called `pause container` (one IP per pod), access to storage and namespace. Typically one container in a Pod runs the application, while the other containers (for logging, etc, called sidecar) support the primary application.
 - containers in pod are started in parallel, no way to determine which becomes available first
 - to communicate between containers in Pod, use loopback interface, use IPC or shared file system
+
+kubectl get pod <pod-name> -o yaml/json
+kubectl describe pod <pod-name>
 
 kubectl logs mypod
 
@@ -300,7 +307,44 @@ interrogates apiserver for object state, modifies the object until declared stat
 - DaemonSet: Ensure pod on every node
 - StatefulSets: to manage stateful applications, considers each pod unique, each pod gets stable storage, stable network identity, and an ordinal, stick a container to a node (otherwise same as deployment). the default deployment is sequential where app-1 is not launched until app-0 is ready and running.
 - Node: cordon / uncordon
-- ResourceQuota: defines quotas per namespace
+
+- ResourceQuota: defines quotas per namespace (requests, limits)
+
+use top on the node to find resource usage
+
+for Pod - set limits for that particular deployment
+```
+        image: nginx
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: "1"
+          limits:
+            memory: 1Gi
+            cpu: "1"
+```   
+
+set limits on an entire namespace
+```
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: low-resource-range
+spec:
+  limits:
+  - default:
+      cpu: 1
+      memory: 500Mi
+    defaultRequest:
+      cpu: 0.5
+      memory: 100Mi
+    type: Container
+```
+Any container in the namespace with LimitRange set will inherit the namespace values for request and limit unless it is overridden in the deployment / pod spec
+
+
+
+
 - Horizontal Pod Autoscalers (HPA) - adds pods if usage > 50% cpu usage (default), kubelet checks the usage, HPA checks with Heapster which retrieves the usage
 - Cluster Autoscaler - adds nodes to cluster
 - Vertical Pod Autoscaler - in development
@@ -336,7 +380,15 @@ Kompose - Docker compose to Kubernetes objects
 
 ### kubectl
 
-kubectl makes REST API calls internally 
+kubectl makes REST API calls internally  (curl)
+Verbose mode
+kubectl --v=9 get pods firstpod
+
+
+kubectl logs firstpod
+is same as
+curl --cert /tmp/client.pem --key /tmp/client-key.pem --cacert /tmp/ca.pem -v -XGET https://<api-server>:<port>/api/v1/namespaces/default/pods/firstpod/log
+
 
 e.g.:
 
@@ -535,9 +587,10 @@ e.g: create a role who can only read pods in a specific namespace
 contains endpoints, credentials, context 
 
 kubectl config use-context foobar
+(context - namespace, user, cluster)
 
 kubectl config view
-(certificate authority, key and certificate come from ~/.kube/config)
+(certificate authority, key and certificate come from ~/.kube/config, without these only insecure calls can be made)
 certificate authority data is passed to authenticate the curl request, users refer to client credentials - client key and certificate, username and password, token. Token and username/password are mutually exclusive.
 kubectl config set-credentials -h
 
@@ -548,6 +601,8 @@ kubectl auth can-i create deployments
 kubectl auth can-i create deployments --as bob
 kubectl auth can-i create deployments --as bob --namespace developer
 
+
+SelfSubjectAccessReview, SubjectAccessReview, LocalSubjectAccessReview, SelfSubjectRulesReview
 
 
 # Example / Sample
